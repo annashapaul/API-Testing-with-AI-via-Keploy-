@@ -1,0 +1,43 @@
+ Create .github/workflows/keploy.yml
+
+name: Keploy API Testing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  keploy-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:4.2
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start App
+        run: |
+          nohup npm start &
+          sleep 10
+
+      - name: Install Keploy
+        run: curl -s https://raw.githubusercontent.com/keploy/keploy/main/install.sh | bash
+
+      - name: Run Keploy Tests
+        run: |
+          keploy test --proxy-port 8081 --app-port 5000 --test-path keploy-tests
